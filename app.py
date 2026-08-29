@@ -2,7 +2,7 @@ import streamlit as st
 
 from pdf_reader import extract_text_from_pdf
 from docx_reader import extract_text_from_docx
-from extracteur import analyze_document
+from extractor import analyze_document
 
 
 st.set_page_config(
@@ -38,5 +38,7 @@ if uploaded_file is not None:
     )
 
     result = analyze_document(text)
+
+    st.subheader("Résultat")
 
     st.json(result)
