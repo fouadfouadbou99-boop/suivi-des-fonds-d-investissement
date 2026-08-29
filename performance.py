@@ -27,3 +27,24 @@ def extract_performance(text):
             result[metric] = match.group(1)
 
     return result
+def detect_opci(text):
+
+    mots = [
+        "opci",
+        "immeuble",
+        "locataire",
+        "taux d'occupation",
+        "valeur locative"
+    ]
+
+    score = 0
+
+    texte = text.lower()
+
+    for mot in mots:
+
+        if mot in texte:
+
+            score += 1
+
+    return score >= 2
