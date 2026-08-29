@@ -1,43 +1,17 @@
-import json
-import streamlit as st
-import google.generativeai as genai
-
-from prompts import PROMPT
+from general import extract_general_info
+from gouvernance import extract_governance
 
 
 def analyze_document(document_text):
 
-    try:
+    result = {}
 
-        genai.configure(
-            api_key=st.secrets["GEMINI_API_KEY"]
-        )
+    result["informations_generales"] = (
+        extract_general_info(document_text)
+    )
 
-        model = genai.GenerativeModel(
-            "models/gemini-3.6-flash"
-        )
+    result["gouvernance"] = (
+        extract_governance(document_text)
+    )
 
-        prompt = f"""
-{PROMPT}
-
-DOCUMENT :
-
-{document_text[:2000]}
-"""
-
-        response = model.generate_content(prompt)
-
-        response_text = (
-            response.text
-            .replace("```json", "")
-            .replace("```", "")
-            .strip()
-        )
-
-        return json.loads(response_text)
-
-    except Exception as e:
-
-        return {
-            "erreur": str(e)
-        }
+    return result
