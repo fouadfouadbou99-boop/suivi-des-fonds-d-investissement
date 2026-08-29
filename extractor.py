@@ -25,9 +25,7 @@ DOCUMENT :
 {document_text[:2000]}
 """
 
-        response = model.generate_content(
-            prompt
-        )
+        response = model.generate_content(prompt)
 
         response_text = (
             response.text
@@ -36,9 +34,7 @@ DOCUMENT :
             .strip()
         )
 
-        return json.loads(
-            response_text
-        )
+        return json.loads(response_text)
 
     except Exception as e:
 
