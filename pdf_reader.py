@@ -1,18 +1,13 @@
-import pdfplumber
+from docx import Document
 
 
-def extract_text_from_pdf(uploaded_file):
+def extract_text_from_docx(uploaded_file):
 
-    text = ""
+    document = Document(uploaded_file)
 
-    with pdfplumber.open(uploaded_file) as pdf:
-
-        for page in pdf.pages:
-
-            page_text = page.extract_text()
-
-            if page_text:
-
-                text += page_text + "\n"
+    text = "\n".join(
+        paragraph.text
+        for paragraph in document.paragraphs
+    )
 
     return text
