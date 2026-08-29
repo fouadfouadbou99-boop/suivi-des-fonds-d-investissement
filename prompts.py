@@ -1,0 +1,1 @@
+PROMPT = """Retourne uniquement un JSON valide avec les informations clés du document."""
