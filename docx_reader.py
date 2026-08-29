@@ -1,6 +1,13 @@
 from docx import Document
 
+
 def extract_text_from_docx(uploaded_file):
-    doc=Document(uploaded_file)
-    return '
-'.join(p.text for p in doc.paragraphs)
+
+    document = Document(uploaded_file)
+
+    text = ""
+
+    for paragraph in document.paragraphs:
+        text += paragraph.text + "\n"
+
+    return text
