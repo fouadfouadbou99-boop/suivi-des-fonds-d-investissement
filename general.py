@@ -9,18 +9,20 @@ def extract_general_info(text):
     }
 
     if "kiara" in text.lower():
-
         result["nom_projet"] = "Projet Kiara"
 
-    date_match = re.search(
+    patterns = [
         r"\d{2}/\d{2}/\d{4}",
-        text
-    )
+        r"\d{2}-\d{2}-\d{4}",
+        r"\d{1,2}\s+\w+\s+\d{4}"
+    ]
 
-    if date_match:
+    for pattern in patterns:
 
-        result["date_reunion"] = (
-            date_match.group()
-        )
+        match = re.search(pattern, text)
+
+        if match:
+            result["date_reunion"] = match.group()
+            break
 
     return result
