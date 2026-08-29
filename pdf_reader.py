@@ -1,10 +1,18 @@
 import pdfplumber
 
+
 def extract_text_from_pdf(uploaded_file):
-    text=''
+
+    text = ""
+
     with pdfplumber.open(uploaded_file) as pdf:
-        for p in pdf.pages:
-            t=p.extract_text()
-            if t:text += t+'
-'
+
+        for page in pdf.pages:
+
+            page_text = page.extract_text()
+
+            if page_text:
+
+                text += page_text + "\n"
+
     return text
