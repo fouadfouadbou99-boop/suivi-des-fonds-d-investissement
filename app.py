@@ -74,4 +74,4 @@ if uploaded_file is not None:
         "Résultat"
     )
 
-    st.json(result)
+    st.json(result)          
