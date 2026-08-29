@@ -1,30 +1,22 @@
-def extract_governance(text):
+import re
 
-    result = {
-        "quorum_atteint": None,
-        "alertes": []
-    }
 
-    texte = text.lower()
+def extract_participants(text):
 
-    if "quorum non atteint" in texte:
+    participants = []
 
-        result["quorum_atteint"] = False
+    patterns = [
+        "CMR",
+        "Attijari",
+        "CDG",
+        "CFG",
+        "Valoris"
+    ]
 
-        result["alertes"].append(
-            "Quorum non atteint"
-        )
+    for p in patterns:
 
-    if "dérogation" in texte:
+        if p.lower() in text.lower():
 
-        result["alertes"].append(
-            "Dérogation détectée"
-        )
+            participants.append(p)
 
-    if "risque" in texte:
-
-        result["alertes"].append(
-            "Risque mentionné"
-        )
-
-    return result
+    return participants
