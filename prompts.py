@@ -11,4 +11,3 @@ Retourne uniquement un JSON valide.
 Ne jamais inventer d'information.
 Si une information est absente, retourner null.
 """
-``
