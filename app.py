@@ -6,32 +6,34 @@ from docx_reader import extract_text_from_docx
 from extractor import analyze_document
 
 
+def format_nombre(valeur):
+
+    try:
+
+        if valeur is None:
+            return "N/A"
+
+        return f"{int(valeur):,}".replace(",", " ")
+
+    except Exception:
+
+        return str(valeur)
+
+
 st.set_page_config(
     page_title="Suivi Fonds PE et OPCI",
     page_icon="📊",
     layout="wide"
 )
 
-st.title("📊 Suivi des Fonds PE et OPCI")
-
-try:
-    st.write(
-        f"GEMINI_API_KEY configurée : {'✅ Oui' if st.secrets.get('GEMINI_API_KEY') else '❌ Non'}"
-    )
-except Exception:
-    st.write("GEMINI_API_KEY configurée : ❌ Non")
-
+st.title("📊 Suivi Fonds PE & OPCI")
 
 uploaded_file = st.file_uploader(
     "Déposer un reporting",
     type=["pdf", "docx"]
 )
 
-if uploaded_file is not None:
-
-    st.info(
-        f"Document chargé : {uploaded_file.name}"
-    )
+if uploaded_file:
 
     if uploaded_file.name.lower().endswith(".pdf"):
 
@@ -39,47 +41,38 @@ if uploaded_file is not None:
             uploaded_file
         )
 
-    elif uploaded_file.name.lower().endswith(".docx"):
+    else:
 
         text = extract_text_from_docx(
             uploaded_file
         )
 
-    else:
-
-        st.error("Format non supporté")
-        st.stop()
-
     st.success(
         f"Texte extrait : {len(text)} caractères"
     )
 
-    with st.expander("Aperçu du texte extrait"):
-
-        st.text_area(
-            "Contenu",
-            text[:5000],
-            height=300
-        )
-
     with st.spinner(
-        "Analyse du document en cours..."
+        "Analyse du reporting..."
     ):
 
         result = analyze_document(text)
 
-    st.success("Analyse terminée")
+    if "erreur" in result:
 
-    ####################################################
-    # SYNTHESE EXECUTIVE
-    ####################################################
+        st.error(result["erreur"])
+
+        with st.expander("Détails"):
+
+            st.json(result)
+
+        st.stop()
 
     infos = result.get(
         "informations_generales",
         {}
     )
 
-    performance = result.get(
+    perf = result.get(
         "performance",
         {}
     )
@@ -89,11 +82,25 @@ if uploaded_file is not None:
         {}
     )
 
+    #################################################
+    # SYNTHESE EXECUTIVE
+    #################################################
+
     st.header("📌 Synthèse Exécutive")
+
+    synthese = result.get(
+        "synthese_executive",
+        ""
+    )
+
+    if synthese:
+
+        st.info(synthese)
 
     col1, col2, col3, col4 = st.columns(4)
 
     with col1:
+
         st.metric(
             "Fonds",
             infos.get(
@@ -103,6 +110,7 @@ if uploaded_file is not None:
         )
 
     with col2:
+
         st.metric(
             "Taille du Fonds",
             infos.get(
@@ -112,15 +120,17 @@ if uploaded_file is not None:
         )
 
     with col3:
+
         st.metric(
             "TRI",
-            performance.get(
+            perf.get(
                 "tri",
                 "N/A"
             )
         )
 
     with col4:
+
         st.metric(
             "Date Comité",
             gouvernance.get(
@@ -129,136 +139,9 @@ if uploaded_file is not None:
             )
         )
 
-    ####################################################
-    # INFORMATIONS GENERALES
-    ####################################################
-
-    st.header("🏦 Informations Générales")
-
-    st.write(
-        f"**Nom du Fonds :** {infos.get('nom_du_fonds', 'N/A')}"
-    )
-
-    st.write(
-        f"**Forme juridique :** {infos.get('forme_juridique', 'N/A')}"
-    )
-
-    st.write(
-        f"**Nature des investissements :** {infos.get('nature_des_investissements', 'N/A')}"
-    )
-
-    st.write(
-        f"**Date de constitution :** {infos.get('date_de_constitution', 'N/A')}"
-    )
-
-    st.write(
-        f"**Durée du fonds :** {infos.get('duree_du_fonds', 'N/A')}"
-    )
-
-    ####################################################
-    # ACTIONNARIAT
-    ####################################################
-
-    actionnariat = infos.get(
-        "actionnariat",
-        {}
-    )
-
-    if actionnariat:
-
-        st.header("👥 Actionnariat")
-
-        df_actionnariat = pd.DataFrame(
-            list(actionnariat.items()),
-            columns=[
-                "Investisseur",
-                "Participation"
-            ]
-        )
-
-        st.dataframe(
-            df_actionnariat,
-            use_container_width=True
-        )
-
-    ####################################################
-    # PERFORMANCE
-    ####################################################
-
-    st.header("📈 Performance")
-
-    c1, c2, c3 = st.columns(3)
-
-    with c1:
-
-        st.metric(
-            "Montant Investi",
-            f"{performance.get('total_investi_dh', 'N/A')}"
-        )
-
-        st.metric(
-            "TRI",
-            performance.get(
-                "tri",
-                "N/A"
-            )
-        )
-
-    with c2:
-
-        st.metric(
-            "Valorisation",
-            f"{performance.get('valorisation_portefeuille_dh', 'N/A')}"
-        )
-
-        st.metric(
-            "Valeur Liquidative",
-            performance.get(
-                "valeur_liquidative_actuelle_dh",
-                "N/A"
-            )
-        )
-
-    with c3:
-
-        st.metric(
-            "Plus-value",
-            f"{performance.get('plus_value_totale_dh', 'N/A')}"
-        )
-
-        st.metric(
-            "Progression VL",
-            performance.get(
-                "progression_valeur_liquidative",
-                "N/A"
-            )
-        )
-
-    ####################################################
-    # PARTICIPATIONS
-    ####################################################
-
-    participations = result.get(
-        "participations",
-        []
-    )
-
-    if participations:
-
-        st.header("🏢 Portefeuille de Participations")
-
-        df_participations = pd.DataFrame(
-            participations
-        )
-
-        st.dataframe(
-            df_participations,
-            use_container_width=True
-        )
-
-    ####################################################
+    #################################################
     # ALERTES
-    ####################################################
+    #################################################
 
     alertes = result.get(
         "alertes",
@@ -275,9 +158,9 @@ if uploaded_file is not None:
                 alerte
             )
 
-    ####################################################
+    #################################################
     # RISQUES
-    ####################################################
+    #################################################
 
     risques = result.get(
         "risques",
@@ -294,9 +177,9 @@ if uploaded_file is not None:
                 risque
             )
 
-    ####################################################
+    #################################################
     # DECISIONS
-    ####################################################
+    #################################################
 
     decisions = result.get(
         "decisions",
@@ -313,9 +196,9 @@ if uploaded_file is not None:
                 decision
             )
 
-    ####################################################
-    # ACTIONS A MENER
-    ####################################################
+    #################################################
+    # ACTIONS DE SUIVI
+    #################################################
 
     actions = result.get(
         "actions_a_mener",
@@ -332,19 +215,184 @@ if uploaded_file is not None:
                 action
             )
 
-    ####################################################
+    #################################################
+    # INFORMATIONS GENERALES
+    #################################################
+
+    st.header("🏦 Informations Générales")
+
+    st.write(
+        f"**Fonds :** {infos.get('nom_du_fonds','N/A')}"
+    )
+
+    st.write(
+        f"**Forme juridique :** {infos.get('forme_juridique','N/A')}"
+    )
+
+    st.write(
+        f"**Activité :** {infos.get('nature_des_investissements','N/A')}"
+    )
+
+    st.write(
+        f"**Date de constitution :** {infos.get('date_de_constitution','N/A')}"
+    )
+
+    st.write(
+        f"**Durée du Fonds :** {infos.get('duree_du_fonds','N/A')}"
+    )
+
+    #################################################
+    # ACTIONNARIAT
+    #################################################
+
+    actionnariat = infos.get(
+        "actionnariat",
+        {}
+    )
+
+    if actionnariat:
+
+        st.header("👥 Actionnariat")
+
+        df_actionnaires = pd.DataFrame(
+            list(actionnariat.items()),
+            columns=[
+                "Investisseur",
+                "Participation"
+            ]
+        )
+
+        st.dataframe(
+            df_actionnaires,
+            use_container_width=True
+        )
+
+    #################################################
+    # PERFORMANCE
+    #################################################
+
+    st.header("📈 Performance")
+
+    p1, p2, p3 = st.columns(3)
+
+    with p1:
+
+        st.metric(
+            "Montant Investi",
+            format_nombre(
+                perf.get("total_investi_dh")
+            )
+        )
+
+        st.metric(
+            "TRI",
+            perf.get(
+                "tri",
+                "N/A"
+            )
+        )
+
+    with p2:
+
+        st.metric(
+            "Valorisation",
+            format_nombre(
+                perf.get(
+                    "valorisation_portefeuille_dh"
+                )
+            )
+        )
+
+        st.metric(
+            "Valeur liquidative",
+            perf.get(
+                "valeur_liquidative_actuelle_dh",
+                "N/A"
+            )
+        )
+
+    with p3:
+
+        st.metric(
+            "Valeur ajoutée",
+            format_nombre(
+                perf.get(
+                    "plus_value_totale_dh"
+                )
+            )
+        )
+
+        st.metric(
+            "Progression VL",
+            perf.get(
+                "progression_valeur_liquidative",
+                "N/A"
+            )
+        )
+
+    #################################################
+    # PARTICIPATIONS
+    #################################################
+
+    participations = result.get(
+        "participations",
+        []
+    )
+
+    if participations:
+
+        st.header(
+            "🏢 Portefeuille de Participations"
+        )
+
+        df = pd.DataFrame(
+            participations
+        )
+
+        st.dataframe(
+            df,
+            use_container_width=True
+        )
+
+    #################################################
     # GOUVERNANCE
-    ####################################################
+    #################################################
 
     st.header("🏛 Gouvernance")
 
-    st.json(
-        gouvernance
+    st.write(
+        f"**Date du comité :** {gouvernance.get('date_reunion_comite_surveillance','N/A')}"
     )
 
-    ####################################################
-    # JSON COMPLET
-    ####################################################
+    st.write(
+        f"**Heure :** {gouvernance.get('heure_reunion','N/A')}"
+    )
+
+    st.write(
+        f"**Participants :** {gouvernance.get('participants','N/A')}"
+    )
+
+    st.write("**Inspection AMMC :**")
+
+    st.info(
+        gouvernance.get(
+            "inspection_ammc",
+            "N/A"
+        )
+    )
+
+    st.write("**ESG / RSE :**")
+
+    st.info(
+        gouvernance.get(
+            "demarches_sdg",
+            "N/A"
+        )
+    )
+
+    #################################################
+    # ANNEXE
+    #################################################
 
     with st.expander(
         "Afficher le JSON complet"
