@@ -7,22 +7,22 @@ from prompts import PROMPT
 
 def analyze_document(document_text):
 
+    response_text = ""
+
     try:
 
-        # Configuration Gemini
         genai.configure(
             api_key=st.secrets["GEMINI_API_KEY"]
         )
 
-        # Modèle Gemini actuel
         model = genai.GenerativeModel(
-            "gemini-2.5-flash"
+            "models/gemini-3.6-flash"
         )
 
         prompt = f"""
 {PROMPT}
 
-DOCUMENT À ANALYSER :
+DOCUMENT A ANALYSER :
 
 {document_text[:30000]}
 """
@@ -31,9 +31,8 @@ DOCUMENT À ANALYSER :
             prompt
         )
 
-        response_text = response.text.strip()
+        response_text = response.text
 
-        # Nettoyage éventuel des balises Markdown
         response_text = (
             response_text
             .replace("```json", "")
@@ -48,7 +47,7 @@ DOCUMENT À ANALYSER :
     except json.JSONDecodeError:
 
         return {
-            "erreur": "Le JSON retourné par Gemini est invalide.",
+            "erreur": "JSON invalide retourné par Gemini",
             "reponse_brute": response_text
         }
 
