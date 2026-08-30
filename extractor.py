@@ -9,28 +9,33 @@ def analyze_document(document_text):
 
     try:
 
+        # Configuration Gemini
         genai.configure(
             api_key=st.secrets["GEMINI_API_KEY"]
         )
 
+        # Modèle Gemini actuel
         model = genai.GenerativeModel(
-            "gemini-1.5-pro"
+            "gemini-2.5-flash"
         )
 
         prompt = f"""
 {PROMPT}
 
-DOCUMENT :
+DOCUMENT À ANALYSER :
 
-{document_text[:25000]}
+{document_text[:30000]}
 """
 
         response = model.generate_content(
             prompt
         )
 
+        response_text = response.text.strip()
+
+        # Nettoyage éventuel des balises Markdown
         response_text = (
-            response.text
+            response_text
             .replace("```json", "")
             .replace("```", "")
             .strip()
@@ -39,6 +44,13 @@ DOCUMENT :
         return json.loads(
             response_text
         )
+
+    except json.JSONDecodeError:
+
+        return {
+            "erreur": "Le JSON retourné par Gemini est invalide.",
+            "reponse_brute": response_text
+        }
 
     except Exception as e:
 
